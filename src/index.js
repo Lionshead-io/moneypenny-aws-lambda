@@ -2,6 +2,7 @@ import AWS from 'aws-sdk';
 import _ from 'lodash';
 
 const ec2 = new AWS.EC2({
+  region: 'us-east-1',
   apiVersion: '2016-11-15'
 });
 
@@ -9,10 +10,10 @@ exports.main = (event, context, callback) => {
   console.log('Moneypenny: ', Date.now());
 
   getMoneypennyManagedInstances().then(res => {
-    console.log(res, 'result');
+    console.log(JSON.stringify(res), 'result');
 
     callback(null, res);
-  });
+  }, (err) => console.log(err));
 };
 
 function getMoneypennyManagedInstances() {

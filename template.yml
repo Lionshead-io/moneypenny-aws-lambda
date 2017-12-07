@@ -1,0 +1,50 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Moneypenny
+
+Parameters:
+  Moneypenny_regions:
+    Type: String
+    Description: Specify comma-delimited list of regions you want Moneypenny operating within.
+    Default: "*"
+  Moneypenny_awake:
+    Type: String
+    Description: Default time to start all of your non-prod instances managed by Moneypenny
+    Default: 12:00 # All times are UTC
+    AllowedPattern: "^(0[0-9]|1[0-9]|2[0-3]):[0-5][0-9]$"
+  Moneypenny_sleep:
+    Type: String
+    Description: Default time to stop all of your non-prod instances managed by Moneypenny
+    Default: 24:00 # All times are UTC
+    AllowedPattern: "^(0[0-9]|1[0-9]|2[0-3]):[0-5][0-9]$"
+
+Resources:
+  MoneypennyFn:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: index.main
+      Runtime: nodejs6.10
+      CodeUri: s3://lionsnet/dist.zip
+      Policies:
+       - AWSLambdaExecute # Managed Policy
+       - Version: '2012-10-17' # Policy Document
+         Statement:
+           - Effect: Allow
+             Action:
+               - ec2:DescribeInstances
+               - ec2:StartInstance
+               - ec2:StopInstance
+             Resource: '*'
+             Condition:
+              StringEquals:
+                'tag:Moneypenny': managed
+      Environment:
+        Variables:
+          Moneypenny_regions: !Ref Moneypenny_regions
+          Moneypenny_awake: !Ref Moneypenny_awake
+          Moneypenny_sleep: !Ref Moneypenny_sleep
+      Events:
+        ScheduleEvent:
+          Type: Schedule
+          Properties:
+            Schedule: rate(1 minutes)
