@@ -3,20 +3,22 @@ Transform: AWS::Serverless-2016-10-31
 Description: Moneypenny
 
 Parameters:
-  Moneypenny_regions:
+  MoneypennyDays:
     Type: String
-    Description: Specify comma-delimited list of regions you want Moneypenny operating within.
-    Default: "*"
-  Moneypenny_awake:
+    Description: Specify comma-delimited list of days you want Moneypenny to save you money. Defaults to every day of the week. (ex. monday,tuesday,wednesday)
+    Default: "*" # Defaults to all days of the week
+  MoneypennyWeekendMode:
+    Type: String
+    Description: Specify yes or no whether or not you want Monneypenny to shutdown instances on Friday and wake them up Monday at the specified MonneyAwake time. Defaults to no.
+    Default: "no" # Defaults to no, meaning that Moneypenny will defer to the days specified by the user
+  MoneypennyAwake:
     Type: String
     Description: Default time to start all of your non-prod instances managed by Moneypenny
     Default: 12:00 # All times are UTC
-    AllowedPattern: "^(0[0-9]|1[0-9]|2[0-3]):[0-5][0-9]$"
-  Moneypenny_sleep:
+  MoneypennySleep:
     Type: String
     Description: Default time to stop all of your non-prod instances managed by Moneypenny
-    Default: 24:00 # All times are UTC
-    AllowedPattern: "^(0[0-9]|1[0-9]|2[0-3]):[0-5][0-9]$"
+    Default: 00:00 # All times are UTC
 
 Resources:
   MoneypennyFn:
@@ -24,14 +26,18 @@ Resources:
     Properties:
       Handler: index.main
       Runtime: nodejs6.10
-      CodeUri: s3://lionsnet/dist.zip
+      CodeUri: s3://lionshead/moneypenny/dist.zip
       Policies:
        - AWSLambdaExecute # Managed Policy
+       - AWSXrayWriteOnlyAccess # Managed Policy
        - Version: '2012-10-17' # Policy Document
          Statement:
            - Effect: Allow
              Action:
                - ec2:DescribeInstances
+             Resource: '*'
+           - Effect: Allow
+             Action:
                - ec2:StartInstance
                - ec2:StopInstance
              Resource: '*'
@@ -40,11 +46,12 @@ Resources:
                 'tag:Moneypenny': managed
       Environment:
         Variables:
-          Moneypenny_regions: !Ref Moneypenny_regions
-          Moneypenny_awake: !Ref Moneypenny_awake
-          Moneypenny_sleep: !Ref Moneypenny_sleep
+          MoneypennyDays: !Ref MoneypennyDays
+          MoneypennyWeekendMode: !Ref MoneypennyWeekendMode
+          MoneypennyAwake: !Ref MoneypennyAwake
+          MoneypennySleep: !Ref MoneypennySleep
       Events:
-        ScheduleEvent:
+        Timer:
           Type: Schedule
           Properties:
-            Schedule: rate(1 minutes)
+            Schedule: rate(15 minutes)

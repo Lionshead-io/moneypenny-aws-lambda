@@ -30,7 +30,8 @@
     "babel-runtime": "^6.11.6",
     "folktale": "^2.0.1",
     "lodash": "^4.17.4",
-    "moment": "^2.19.2",
+    "moment": "^2.19.3",
+    "moment-round": "^1.0.1",
     "ramda": "^0.25.0",
     "rollup-plugin-flow": "^1.1.1",
     "superagent": "^3.8.1"
